@@ -7,6 +7,9 @@ android {
     namespace = "com.sharmasandsons.blogapplication"
     compileSdk = 35
 
+    buildFeatures{
+        viewBinding = true
+    }
     defaultConfig {
         applicationId = "com.sharmasandsons.blogapplication"
         minSdk = 24
