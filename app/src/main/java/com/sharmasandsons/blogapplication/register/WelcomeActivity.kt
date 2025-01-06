@@ -19,21 +19,22 @@ class WelcomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_welcome)
+        setContentView(binding.root)
 
 
 
         binding.loginButton.setOnClickListener {
             val intent = Intent(this, SignInAndRegisterationActivity::class.java)
+            intent.putExtra("action","login")
             startActivity(intent)
         }
+
 
         binding.registerButton.setOnClickListener {
             val intent = Intent(this, SignInAndRegisterationActivity::class.java)
+            intent.putExtra("action","register")
             startActivity(intent)
-
         }
-
 
 
 
