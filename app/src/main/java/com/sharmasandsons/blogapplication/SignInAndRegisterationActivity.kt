@@ -2,7 +2,9 @@ package com.sharmasandsons.blogapplication
 
 import android.content.Intent
 import android.net.Uri
+import android.nfc.Tag
 import android.os.Bundle
+import android.util.Log
 
 import android.view.View
 import android.widget.Toast
@@ -16,6 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.sharmasandsons.blogapplication.databinding.ActivitySignInAndRegisterationBinding
 import  com.sharmasandsons.blogapplication.Model.UserData
+import com.sharmasandsons.blogapplication.register.WelcomeActivity
 
 class SignInAndRegisterationActivity : AppCompatActivity() {
 
@@ -38,17 +41,19 @@ class SignInAndRegisterationActivity : AppCompatActivity() {
 //            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 //            insets
 //        }
+
         fireBaseAuth =
             FirebaseAuth.getInstance()// Inilisation of firebase auth , we can create users using this
-        firebaseDatabase = FirebaseDatabase.getInstance()
+        firebaseDatabase =
+            FirebaseDatabase.getInstance("https://blogapplication-7cab8-default-rtdb.asia-southeast1.firebasedatabase.app")
 
 //For Visiblity of fields
         val action = intent.getStringExtra("action")
         // adjust visiblity for login
 // for visiblity of field at the time of login
         if (action == "login") {
-            binding.editTextTextEmailAddress.visibility = View.VISIBLE
-            binding.editTextNumberPassword.visibility = View.VISIBLE
+            binding.loginEmail.visibility = View.VISIBLE
+            binding.loginPassword.visibility = View.VISIBLE
             binding.loginButton.visibility = View.VISIBLE
 
             binding.newHere.isEnabled = true
@@ -62,6 +67,28 @@ class SignInAndRegisterationActivity : AppCompatActivity() {
             binding.enterEmailR.visibility = View.GONE
             binding.cardView.visibility = View.GONE
 
+            binding.loginButton.setOnClickListener {
+                val loginEmail = binding.loginEmail.text.toString();
+                val loginPassword = binding.loginPassword.text.toString();
+                if (loginEmail.isEmpty() || loginPassword.isEmpty()) {
+                    Toast.makeText(this, "Enter All the details requiered!", Toast.LENGTH_SHORT)
+                        .show()
+
+                } else {
+                    fireBaseAuth.signInWithEmailAndPassword(loginEmail, loginPassword)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Toast.makeText(this, "Login Succesfull", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(this, MainActivity::class.java))
+                                finish()
+                            } else {
+                                Toast.makeText(this, "Login Unsucsesfull", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                }
+            }
+
 
         } else if (action == "register") {// for visiblity of the fields at the time of register
             binding.loginButton.isEnabled = false
@@ -74,13 +101,14 @@ class SignInAndRegisterationActivity : AppCompatActivity() {
                 val registerName = binding.enterNameR.text.toString();
                 val registerEmail = binding.enterEmailR.text.toString();
                 val registerPasswrod = binding.enterPassworR.text.toString();
-                if (registerName.isBlank()  || registerEmail.isEmpty() || registerPasswrod.isEmpty()) {
-                    Toast.makeText(this, "Please fill all the detatils", Toast.LENGTH_SHORT).show()
+                if (registerName.isBlank() || registerEmail.isEmpty() || registerPasswrod.isEmpty()) {
+                    Toast.makeText(this, "Please fill all the details", Toast.LENGTH_SHORT).show()
                 } else {
                     fireBaseAuth.createUserWithEmailAndPassword(registerEmail, registerPasswrod)
                         .addOnCompleteListener { Task ->
                             if (Task.isSuccessful) {
                                 val user = fireBaseAuth.currentUser
+                                fireBaseAuth.signOut()
                                 user?.let {
                                     //save user data into realtime database
                                     val userReference = firebaseDatabase.getReference("users")
@@ -88,20 +116,24 @@ class SignInAndRegisterationActivity : AppCompatActivity() {
                                     val userData = UserData(registerName, registerEmail)
 
                                     userReference.child(userId).setValue(userData)
+                                        .addOnSuccessListener {
+                                            Log.d("Tag", "OnCreate : Data saved to database")
+                                        }.addOnFailureListener { e ->
+                                            Log.d("tag", "Erro on saving the data ${e.message}")
+
+                                        }
                                     Toast.makeText(
-                                        this,
-                                        "User Registered Succesfull",
-                                        Toast.LENGTH_SHORT
+                                        this, "User Registered Succesfull", Toast.LENGTH_SHORT
                                     ).show()
+                                    startActivity(Intent(this, WelcomeActivity::class.java))
+                                    finish()
 
                                 }
 
 
                             } else {
                                 Toast.makeText(
-                                    this,
-                                    "User registeratio failed!",
-                                    Toast.LENGTH_LONG
+                                    this, "User registeratio failed!", Toast.LENGTH_LONG
                                 ).show()
                             }
                         }
@@ -111,8 +143,7 @@ class SignInAndRegisterationActivity : AppCompatActivity() {
                         intent.type = "image/*"
                         intent.action = Intent.ACTION_GET_CONTENT
                         startActivityForResult(
-                            Intent.createChooser(intent, "seletc image"),
-                            PICK_IMAGE_REQUEST
+                            Intent.createChooser(intent, "select image"), PICK_IMAGE_REQUEST
                         )
 
 
@@ -131,8 +162,8 @@ class SignInAndRegisterationActivity : AppCompatActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.data != null) {
             imageUri = data.data
-            Glide.with(this)
-                .load(imageUri).apply(RequestOptions.circleCropTransform()).into(binding.userImage)
+            Glide.with(this).load(imageUri).apply(RequestOptions.circleCropTransform())
+                .into(binding.userImage)
         }
     }
 }
