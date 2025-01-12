@@ -2,8 +2,8 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.BlogApplication" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-<!--         <item name="colorPrimary">@color/Blue</item>-->
-        <item name="android:statusBarColor" >@color/Blue</item>
+        <!--         <item name="colorPrimary">@color/Blue</item>-->
+        <item name="android:statusBarColor">@color/Blue</item>
     </style>
 
     <style name="Theme.BlogApplication" parent="Base.Theme.BlogApplication" />
